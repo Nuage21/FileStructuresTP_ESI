@@ -43,8 +43,8 @@ void blck_write( FILE *_file, long _i, fblock_t *_buf );
 // if exist: then it's &i'th block with a j'th offset
 long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, int *found, long *i, int *j);
 
-// logic deletion of a file's in-value
-void f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val);
+// logic deletion of a file's in-value {return: total run ops}
+long f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val);
 
 // display blocks @[min, max]
 void f_show(FILE* _f, fblock_t *_buf, int min, int max);

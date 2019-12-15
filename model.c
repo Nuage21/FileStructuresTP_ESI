@@ -73,7 +73,12 @@ long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, i
             // binary search inside the containing? block
             while (inf <= sup && !*found) {
                 *j = (inf + sup) / 2;
-                if ( val == _buf->arr[*j] ) *found= 1;
+                if ( val == _buf->arr[*j])
+                {
+                    if( _buf->raz[*j] == ' ')
+                        *found= 1;
+                    return cpt;
+                }
                 else
                 if ( val < _buf->arr[*j] )
                     sup = *j - 1;
@@ -92,7 +97,7 @@ long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, i
 
 
 // logic deletion of a file's in-value
-void f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
+long f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
 {
     long i, cptR;
     int found, j;
@@ -104,14 +109,12 @@ void f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
         return;
     }
 
-    printf("the value is stored in the %ld'th block with a %ld's offset\n", i, j);
-
     _buf->raz[j] = '*';   // logical kick out
     blck_write(_f, i, _buf );
 
     _fheader->sup++;
 
-    printf("total ops (seek + del) = %ld + 1 = %ld of i/o ops. \n", cptR, cptR+1 );
+    return cptR + 1;
 
 }
 

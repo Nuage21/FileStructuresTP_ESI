@@ -1,40 +1,55 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include "model.h"
 
 #define LEN(X) (sizeof(X) / sizeof(X[0])) // get array length
 
-int main() {
-    FILE *file = NULL;
-    fheader_t fheader;
-    fblock_t fblock;
+// functions
 
-    fblock.total = 0;
-    f_open(&file, "myfile.txt", &fheader, 'n');
-    for(int i = 0; i < MAX_ARR; ++i)
+int main()
+{
+    FILE* f = NULL;
+    fheader_t fheader;
+    fblock_t buf;
+    buf.total = 0;
+
+    f_open(&f, "myfile.txt", &fheader, 'n');
+    for(int i = 0; i < 15; ++i)
     {
-        fblock.arr[i] = 42818;
-        fblock.raz[i] = ' ';
-        (fblock.total)++;
+        buf.arr[i] = i;
+        buf.raz[i] = ' ';
+        (buf.total)++;
     }
     fheader.bck = 1;
     fheader.ins = MAX_ARR;
 
-    dir_write(file, 0, &fblock);
-    f_close(file, &fheader);
+    blck_write(f, 0, &buf);
+    f_close(f, &fheader);
 
     fheader.bck = 0xffeeffee;
 
-    f_open(&file, "myfile.txt", &fheader, 'r');
+    f_open(&f, "myfile.txt", &fheader, 'r');
 
     printf("total block = %d\n", fheader.bck);
 
-    fblock_t buf;
-    dir_read(file, 0, &buf);
+    blck_read(f, 0, &buf);
 
-    printf("block_0[0] = %d\n", buf.arr[0]);
+    // test deletion
+    f_del(f, &fheader, &buf, 13);
 
-    f_close(file, &fheader);
+    f_show(f, &buf, 0, 0);
+
+    int found, off = -1;
+    long  at_block = -1;
+    int val = 12;
+
+    f_binary_search(f, &fheader, &buf, val, &found, &at_block, &off);
+    if(found)
+        printf("value is at %d'th block with a %d's offset\n", at_block, off);
+    f_close(f, &fheader);
     return 0;
 }
+
+
+
+
+

@@ -33,9 +33,20 @@ void f_open(FILE** _f_holder, char *_filename, fheader_t *_h_holder, char mode);
 void f_close(FILE *_file, fheader_t *_header);
 
 // read the _i'th block from _file & stores it @buf
-void dir_read( FILE *_file, long _i, fblock_t *_buf);
+void blck_read( FILE *_file, long _i, fblock_t *_buf);
 
 // write down in@buf at _i'th pos of _file
-void dir_write( FILE *_file, long _i, fblock_t *_buf );
+void blck_write( FILE *_file, long _i, fblock_t *_buf );
+
+// BinarySearch
+// return back total of block inputs
+// if exist: then it's &i'th block with a j'th offset
+long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, int *found, long *i, int *j);
+
+// logic deletion of a file's in-value
+void f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val);
+
+// display blocks @[min, max]
+void f_show(FILE* _f, fblock_t *_buf, int min, int max);
 
 #endif //ESI_TP_MODEL_H

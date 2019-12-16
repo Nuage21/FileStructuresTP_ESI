@@ -3,6 +3,7 @@
 
 #include "model.h"
 #include <stdio.h>
+#include <io.h>
 
 
 void f_open(FILE** _f_holder, char *_filename, fheader_t *_h_holder, char _mode)
@@ -45,6 +46,21 @@ void blck_write( FILE *_f_holder, long _i, fblock_t *_buf )
     fwrite(_buf, sizeof(fblock_t), 1, _f_holder);
 }
 
+// block deletion
+void blck_del(FILE *_file, fheader_t *_fheader, fblock_t *_buf, long _i)
+{
+    if(_i >= _fheader->bck)
+        return;
+    // else => @_i = last block
+    if(_i < _fheader->bck - 1)
+        for(int i = _i + 1; i < _fheader->bck; i++)
+        {
+            blck_read(_file, i, _buf);
+            blck_write(_file, i - 1, _buf);
+        }
+    _fheader->bck--;
+    _chsize(_fileno(_file), sizeof(fheader_t) + sizeof(fblock_t) * _fheader->bck);
+}
 
 // BinarySearch
 long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, int *found, long *i, int *j)
@@ -106,7 +122,7 @@ long f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
 
     if (!found || _buf->raz[j] == '*') {
         printf("error: can't delete value! not found!\n");
-        return;
+        return cptR;
     }
 
     _buf->raz[j] = '*';   // logical kick out
@@ -118,7 +134,19 @@ long f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
 
 }
 
+void blck_show(fblock_t *_buf)
+{
+    printf("|block \t total-stored-structs = %2d \t max-capacity = %2d]\n",  _buf->total, MAX_ARR);
 
+    for(int j=0; j<MAX_ARR; j++)
+        if (_buf->raz[j] == ' ')
+            printf("%ld ", _buf->arr[j]);
+        else if(_buf->raz[j] == '*')
+            printf("*%ld* ", _buf->arr[j]);
+        else
+            printf("~ "); // unset
+    printf("\n________________________________________________\n");
+}
 // display blocks @[min, max]
 void f_show(FILE* _f, fblock_t *_buf, int min, int max)
 {
@@ -126,13 +154,8 @@ void f_show(FILE* _f, fblock_t *_buf, int min, int max)
 
     for (;min <= max; ++min) {
         blck_read(_f, min, _buf);
-        printf("[%3ld'th block \t total-stored-structs = %2d \t max-capacity = %2d]\n", min, _buf->total, MAX_ARR);
-        for( j=0; j<_buf->total; j++)
-            if (_buf->raz[j] == ' ' )
-                printf("%ld ", _buf->arr[j]);
-            else
-                printf("*%ld* ", _buf->arr[j]);
-        printf("\n________________________________________________\n");
+        printf("\n[%3ld'th ", min);
+        blck_show(_buf);
     }
 
 }

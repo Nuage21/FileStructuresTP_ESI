@@ -7,7 +7,7 @@
 
 // functions
 void blck_adjust(fblock_t *buf);
-void f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
+long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 
 int main()
 {
@@ -73,17 +73,15 @@ int main()
 
     f_open(&f, "myfile.txt", &fheader, 'r');
 
-    memset(&buf, 0, sizeof(fblock_t));
     f_show(f, &buf, 0, fheader.bck - 1);
 
-    fblock_t buf2;
-    memset(&buf2, 0, sizeof(fblock_t));
-    memset(&buf, 0, sizeof(fblock_t));
+    fblock_t buf2; // provide another buffer (uses 2 - as mentioned on the exercice)
+    long ctr = f_adjust(f, &fheader, &buf, &buf2);
 
-    f_adjust(f, &fheader, &buf, &buf2);
     printf("____________________________AFTER__ADJUST_____________________________\n");
     f_show(f, &buf, 0, fheader.bck - 1);
 
+    printf("Adjusting op has taken: %ld ops\n", ctr);
     f_close(f, &fheader);
 
     return 0;
@@ -107,18 +105,22 @@ void blck_adjust(fblock_t *buf)
 
 // adjust a sorted file to get a 100% loading rate (except for last block in most cases)
 // file is kept sorted
-void f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
+// return total input/output to the hard drive
+
+long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
 {
+    long io_counter = 0;
     for(int i = 0;i < _fheader->bck;i++)
     {
         blck_read(_f, i, _buf1);
+        io_counter++; // block read!
 
         if(_buf1->total == MAX_ARR)
             continue; // skip full blocks
 
         if(_buf1->total == 0)
         {
-            blck_del(_f, _fheader, _buf1, i);
+            io_counter += blck_del(_f, _fheader, _buf1, i);
             i--; // next block is at current position
             continue;
         }
@@ -135,6 +137,7 @@ void f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
             do
             {
                 blck_read(_f, j++, _buf2);
+                io_counter++; // block read!
             }
             while(_buf2->total <= 0 && j < _fheader->bck);
 
@@ -147,7 +150,7 @@ void f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
                 // delete blocks > i;
             }
 
-            blck_adjust(_buf2);
+            blck_adjust(_buf2); // adjust next block
 
             int q = 0;
             for(;(q < _buf2->total) && (p < MAX_ARR); ++p, ++q)
@@ -164,9 +167,13 @@ void f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
             blck_write(_f, i, _buf1);
             blck_write(_f, j - 1, _buf2);
 
+            io_counter += 2; // block written twice!
+
         }
     }
-    blck_write(_f, _fheader->bck - 1, _buf1);
+
+    blck_write(_f, _fheader->bck - 1, _buf1); // write last block
+    return ++io_counter;
 }
 
 

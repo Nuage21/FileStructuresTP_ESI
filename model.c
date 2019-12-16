@@ -47,10 +47,10 @@ void blck_write( FILE *_f_holder, long _i, fblock_t *_buf )
 }
 
 // block deletion
-void blck_del(FILE *_file, fheader_t *_fheader, fblock_t *_buf, long _i)
+long blck_del(FILE *_file, fheader_t *_fheader, fblock_t *_buf, long _i)
 {
     if(_i >= _fheader->bck)
-        return;
+        return 0;
     // else => @_i = last block
     if(_i < _fheader->bck - 1)
         for(int i = _i + 1; i < _fheader->bck; i++)
@@ -60,6 +60,7 @@ void blck_del(FILE *_file, fheader_t *_fheader, fblock_t *_buf, long _i)
         }
     _fheader->bck--;
     _chsize(_fileno(_file), sizeof(fheader_t) + sizeof(fblock_t) * _fheader->bck);
+    return 2 * (_fheader->bck - _i - 1);
 }
 
 // BinarySearch

@@ -39,7 +39,7 @@ void blck_read(FILE *_file, long _i, fblock_t *_buf);
 void blck_write(FILE *_file, long _i, fblock_t *_buf );
 
 // delete i'th block from _file
-void blck_del(FILE *_file, fheader_t *_header, fblock_t *_buf, long _i);
+long blck_del(FILE *_file, fheader_t *_header, fblock_t *_buf, long _i);
 
 // BinarySearch
 // return back total of block inputs

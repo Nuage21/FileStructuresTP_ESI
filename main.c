@@ -54,7 +54,14 @@ int main()
         int opcode = get_opcode(taskbuf);
 
         if(opcode == QUITAPP_OP)
+        {
+            if(f != NULL)
+            {
+                f_close(f, &fheader);
+                printf("file closed - bye!\n");
+            }
             break;
+        }
 
         switch(opcode)
         {
@@ -96,14 +103,6 @@ int main()
                 {
                     tmp = f_adjust(f, &fheader, &buf1, &buf2);
                     printf("task has taken %d i/o ops\n", tmp);
-                }
-                break;
-
-            case QUITAPP_OP:
-                if(f != NULL)
-                {
-                    f_close(f, &fheader);
-                    printf("file closed - bye!\n");
                 }
                 break;
 

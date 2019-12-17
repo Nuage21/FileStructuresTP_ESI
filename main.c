@@ -17,26 +17,22 @@ int main()
     buf.total = 0;
 
     f_open(&f, "myfile.txt", &fheader, 'n');
-    for(int i = 0; i < MAX_ARR; ++i)
+    for(int i = 0; i < MAX_ARR/2; ++i)
     {
         buf.arr[i] = i;
-        if(i < 10)
-        {
             buf.raz[i] = ' ';
             (buf.total)++;
             fheader.ins++;
-        }
     }
 
     blck_write(f, 0, &buf);
     memset(&buf, 0, sizeof(fblock_t));
 
-    for(int i = 15, j = 0; j < 10; i++, j++)
+    for(int i = 0; i < MAX_ARR/2; ++i)
     {
-        if(j == 5)
-            continue;
-        buf.arr[j] = i;
-        buf.raz[j] = ' ';
+
+        buf.arr[i] = i;
+        buf.raz[i] = ' ';
         (buf.total)++;
         fheader.ins++;
     }
@@ -44,19 +40,17 @@ int main()
     blck_write(f, 1, &buf);
     memset(&buf, 0, sizeof(fblock_t));
 
-    for(int i = 30, j = 0; j < 10; i++, j++)
+    for(int i = 1; i < MAX_ARR/2; ++i)
     {
-        if(j % 2 == 0)
-            continue;
-        buf.arr[j] = i;
-        buf.raz[j] = ' ';
+        buf.arr[i] = i;
+        buf.raz[i] = ' ';
         (buf.total)++;
         fheader.ins++;
     }
     blck_write(f, 2, &buf);
 
     memset(&buf, 0, sizeof(fblock_t));
-    for(int i = 0; i < MAX_ARR; ++i)
+    for(int i = 2; i < MAX_ARR/2; ++i)
     {
         buf.arr[i] = i;
         buf.raz[i] = ' ';
@@ -67,7 +61,11 @@ int main()
 
     blck_write(f, 3, &buf);
 
-    fheader.bck = 4;
+    memset(&buf, 0, sizeof(fblock_t));
+    blck_write(f, 4, &buf);
+    blck_write(f, 5, &buf);
+
+    fheader.bck = 6;
 
     f_close(f, &fheader);
 
@@ -110,6 +108,7 @@ void blck_adjust(fblock_t *buf)
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
 {
     long io_counter = 0;
+    int z = 0;
     for(int i = 0;i < _fheader->bck;i++)
     {
         blck_read(_f, i, _buf1);
@@ -147,7 +146,6 @@ long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
                 // go out { left blocks are empty - kick'em out }
                 _fheader->bck = i + 1; // last block is i'th one
                 break;
-                // delete blocks > i;
             }
 
             blck_adjust(_buf2); // adjust next block
@@ -171,8 +169,8 @@ long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2)
 
         }
     }
-
-    blck_write(_f, _fheader->bck - 1, _buf1); // write last block
+    if(_buf1->total > 0) // only if has elements
+        blck_write(_f, _fheader->bck - 1, _buf1); // write last block
     return ++io_counter;
 }
 

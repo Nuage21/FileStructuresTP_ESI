@@ -190,6 +190,8 @@ void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf)
         else {
             buf->total = j;
             blck_write(_f, i - 1, buf);
+            memset(buf, 0, sizeof(fblock_t)); // must clear for the next iteration
+
             i++;
             buf->arr[0] = k*10;
             buf->raz[0] = ' ';

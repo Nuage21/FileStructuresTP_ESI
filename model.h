@@ -58,4 +58,7 @@ void f_show(FILE* _f, fblock_t *_buf, int min, int max);
 // init load to u% ...
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 
+// truncate _n blocks from _file (change its size & its bck-num prop)
+void f_truncate_blocks(FILE *_file, fheader_t *_fheader, long _n);
+
 #endif //ESI_TP_MODEL_H

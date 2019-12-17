@@ -207,5 +207,10 @@ void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf)
 
 }
 
+void f_truncate_blocks(FILE *_file, fheader_t *_fheader, long _n)
+{
+    _fheader->bck -= _n;
+    _chsize(_fileno(_file), sizeof(fheader_t) + sizeof(fblock_t) * _fheader->bck);
+}
 //
 

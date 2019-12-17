@@ -9,6 +9,7 @@
 void blck_adjust(fblock_t *buf);
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
+long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset);
 
 int main()
 {
@@ -30,15 +31,59 @@ int main()
 
     printf("____________________________AFTER__ADJUST_____________________________\n");
 
-    fblock_t buf2; // provide another buffer (uses 2 - as mentioned on the exercice)
-    long ctr = f_adjust(f, &fheader, &buf, &buf2);
+    f_del_unordered(f, &fheader, &buf, 0, 0);
 
     f_show(f, &buf, 0, fheader.bck - 1);
 
-    printf("Adjusting op has taken: %ld ops\n", ctr);
+    printf("Adjusting op has taken: ops\n");
     f_close(f, &fheader);
 
     return 0;
+}
+
+// delete offset'th structure from the _blck'th block replacing it with the last element of the file
+// if element doesn't existe then it'll just be replaced with the last one;
+long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset)
+{
+    if(_blck >= _fheader->bck || offset >= MAX_ARR)
+        return 0;
+
+    bool found = false;
+    long last_strct = 0;
+    long io_counter = 0;
+    int i = _fheader->bck - 1; // last block index & iterate back till find a non-empty one
+
+    while(!found)
+    {
+        blck_read(_f, i, buf);
+        io_counter++; // read
+
+        if(buf->total > 0) // has at least one element ?
+        {
+            // get last element
+            for(int j = MAX_ARR; j >= 0; j--)
+            {
+                if(buf->raz[j] == ' ')
+                {
+                    last_strct = buf->arr[j]; // gotcha
+                    buf->raz[j] = 'x';
+                    blck_write(_f, _blck, buf); // kill the last one
+                    found = true;
+                    io_counter++; // write
+                    break;
+                }
+            }
+        }
+        i--;
+    }
+    if(found)
+    {
+        blck_read(_f, _blck, buf);
+        buf->arr[offset] = last_strct;
+        blck_write(_f, _blck, buf);
+        io_counter += 2;
+    }
+    return io_counter;
 }
 
 // move deleted structures to the extreme right;

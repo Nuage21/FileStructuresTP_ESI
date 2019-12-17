@@ -55,4 +55,7 @@ void blck_show(fblock_t *_buf);
 // display blocks @[min, max]
 void f_show(FILE* _f, fblock_t *_buf, int min, int max);
 
+// init load to u% ...
+void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
+
 #endif //ESI_TP_MODEL_H

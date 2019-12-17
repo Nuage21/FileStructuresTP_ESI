@@ -8,6 +8,7 @@
 // functions
 void blck_adjust(fblock_t *buf);
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
+void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 
 int main()
 {
@@ -17,55 +18,9 @@ int main()
     buf.total = 0;
 
     f_open(&f, "myfile.txt", &fheader, 'n');
-    for(int i = 0; i < MAX_ARR/2; ++i)
-    {
-        buf.arr[i] = i;
-            buf.raz[i] = ' ';
-            (buf.total)++;
-            fheader.ins++;
-    }
-
-    blck_write(f, 0, &buf);
     memset(&buf, 0, sizeof(fblock_t));
 
-    for(int i = 0; i < MAX_ARR/2; ++i)
-    {
-
-        buf.arr[i] = i;
-        buf.raz[i] = ' ';
-        (buf.total)++;
-        fheader.ins++;
-    }
-
-    blck_write(f, 1, &buf);
-    memset(&buf, 0, sizeof(fblock_t));
-
-    for(int i = 1; i < MAX_ARR/2; ++i)
-    {
-        buf.arr[i] = i;
-        buf.raz[i] = ' ';
-        (buf.total)++;
-        fheader.ins++;
-    }
-    blck_write(f, 2, &buf);
-
-    memset(&buf, 0, sizeof(fblock_t));
-    for(int i = 2; i < MAX_ARR/2; ++i)
-    {
-        buf.arr[i] = i;
-        buf.raz[i] = ' ';
-        (buf.total)++;
-        fheader.ins++;
-
-    }
-
-    blck_write(f, 3, &buf);
-
-    memset(&buf, 0, sizeof(fblock_t));
-    blck_write(f, 4, &buf);
-    blck_write(f, 5, &buf);
-
-    fheader.bck = 6;
+    f_load(f, &fheader, &buf);
 
     f_close(f, &fheader);
 
@@ -73,10 +28,11 @@ int main()
 
     f_show(f, &buf, 0, fheader.bck - 1);
 
+    printf("____________________________AFTER__ADJUST_____________________________\n");
+
     fblock_t buf2; // provide another buffer (uses 2 - as mentioned on the exercice)
     long ctr = f_adjust(f, &fheader, &buf, &buf2);
 
-    printf("____________________________AFTER__ADJUST_____________________________\n");
     f_show(f, &buf, 0, fheader.bck - 1);
 
     printf("Adjusting op has taken: %ld ops\n", ctr);

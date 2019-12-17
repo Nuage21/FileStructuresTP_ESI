@@ -161,5 +161,49 @@ void f_show(FILE* _f, fblock_t *_buf, int min, int max)
 
 }
 
+// init load to u% ...
+void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf)
+{
+    long i, k, n;
+    int j;
+    double u;
+
+    printf("file primary initialization...\n");
+    printf("type total structures to insert: ");
+    scanf(" %ld", &n);
+    printf("type loading rate E[0, 1]: ");
+    scanf(" %lf", &u);
+    if ( u < 1/MAX_ARR ) u = 1/MAX_ARR;
+    if ( u > 1 ) u = 1.0;	     // max  = 100%
+
+    printf("blocks filling with %d structures (except last one!)\n",\
+	   (int)(MAX_ARR*u));
+
+    j = 0;
+    i = 1;
+    for (k=0; k<n; k++) {
+        if ( j < MAX_ARR*u ) {
+            buf->arr[j] = k*10;
+            buf->raz[j] = ' ';
+            j++;
+        }
+        else {
+            buf->total = j;
+            blck_write(_f, i - 1, buf);
+            i++;
+            buf->arr[0] = k*10;
+            buf->raz[0] = ' ';
+            j = 1;
+        }
+    }
+    // last output ...
+    buf->total = j;
+    blck_write(_f, i - 1, buf);
+    // m-a-j de l'entete ...
+    _fheader->bck = i;
+    _fheader->ins = n;
+
+}
+
 //
 

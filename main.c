@@ -6,7 +6,7 @@
 /******************************************************************
  * Author: Hakim Beldjoudi
  * code can be found at https://github.com/hbFree/FileStructuresTP_ESI
- * 
+ *
  */
 // functions
 void blck_adjust(fblock_t *buf);
@@ -47,6 +47,8 @@ int main()
     while(true)
     {
         memset(filename, 0, FILENAME_MAX);
+        memset(&buf1, 0, sizeof(fblock_t));
+        memset(&buf2, 0, sizeof(fblock_t));
         memset(taskbuf, 0, 20);
 
         printf(">> ");
@@ -144,7 +146,7 @@ int main()
                 {
                     printf("block(type -1 for last block): ");
                     scanf("%d", &from);
-                    printf("to(type -1 for last el): ");
+                    printf("position (type -1 for last el): ");
                     scanf("%d", &to);
                     if(to == -1)
                         to = MAX_ARR - 1;
@@ -209,7 +211,8 @@ long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, i
                 {
                     last_strct = buf->arr[j]; // gotcha
                     buf->raz[j] = 'x';
-                    blck_write(_f, _blck, buf); // kill the last one
+                    blck_write(_f, i, buf); // kill the last one
+                    memset(buf, 0, sizeof(fblock_t));
                     found = true;
                     io_counter++; // write
                     break;

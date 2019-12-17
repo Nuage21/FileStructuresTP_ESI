@@ -3,40 +3,182 @@
 #include <string.h>
 #include "model.h"
 
-#define LEN(X) (sizeof(X) / sizeof(X[0])) // get array length
-
+/******************************************************************
+ * Author: Hakim Beldjoudi
+ * code can be found at https://github.com/hbFree/FileStructuresTP_ESI
+ * 
+ */
 // functions
 void blck_adjust(fblock_t *buf);
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset);
 
+char* ops[] = {"open", "close", "load", "adjust", "quit", "del", "udel", "show", "search"};
+
+#define OPENFILE_OP   0
+#define CLOSEFILE_OP  1
+#define LOADFILE_OP   2
+#define ADJUSTFILE_OP 3
+#define QUITAPP_OP    4
+#define DELETE_OP     5
+#define UDELETE_OP    6 // unordered file value deletion by last replacing
+#define SHOW_OP       7
+#define SEARCH_OP     8 // binary search a value (par dichotomie)
+#define INVALID_OP   -1
+
+int get_opcode(const char *_task)
+{
+    for(int i = 0; i < 9; i++)
+        if(strcmp(_task, ops[i]) == 0)
+            return i;
+    return INVALID_OP;
+}
 int main()
 {
     FILE* f = NULL;
     fheader_t fheader;
-    fblock_t buf;
-    buf.total = 0;
+    fblock_t buf1, buf2;
 
-    f_open(&f, "myfile.txt", &fheader, 'n');
-    memset(&buf, 0, sizeof(fblock_t));
+    char taskbuf[20];
+    char filename[FILENAME_MAX];
+    char answer = '\0';
+    long from = 0, to = 0, tmp = 0, tmp1 = 0;
+    while(true)
+    {
+        memset(filename, 0, FILENAME_MAX);
+        memset(taskbuf, 0, 20);
 
-    f_load(f, &fheader, &buf);
+        printf(">> ");
+        scanf("%s", taskbuf);
+        int opcode = get_opcode(taskbuf);
 
-    f_close(f, &fheader);
+        if(opcode == QUITAPP_OP)
+            break;
 
-    f_open(&f, "myfile.txt", &fheader, 'r');
+        switch(opcode)
+        {
+            case OPENFILE_OP:
+                if(f != NULL)
+                    printf("error: please close the current file and retry!\n");
+                else
+                {
+                    printf("opening mode (new/read): ");
+                    scanf("%s", &answer);
+                    printf("filename = ");
+                    scanf("%s", filename);
+                    f_open(&f, filename, &fheader, answer);
+                    printf("success: file %s is open!\n", filename);
+                }
+                break;
 
-    f_show(f, &buf, 0, fheader.bck - 1);
+            case CLOSEFILE_OP:
+                if(f == NULL)
+                    printf("error: no file to close - nothing opened!\n");
+                else
+                {
+                    f_close(f, &fheader);
+                    f = NULL;
+                }
+                break;
 
-    printf("____________________________AFTER__ADJUST_____________________________\n");
+            case LOADFILE_OP:
+                if(f == NULL)
+                    printf("error: no file to load elements to - nothing opened!\n");
+                else
+                    f_load(f, &fheader, &buf1);
+                break;
 
-    f_del_unordered(f, &fheader, &buf, 0, 0);
+            case ADJUSTFILE_OP:
+                if(f == NULL)
+                    printf("error: no file to adjust - nothing opened!\n");
+                else
+                {
+                    tmp = f_adjust(f, &fheader, &buf1, &buf2);
+                    printf("task has taken %d i/o ops\n", tmp);
+                }
+                break;
 
-    f_show(f, &buf, 0, fheader.bck - 1);
+            case QUITAPP_OP:
+                if(f != NULL)
+                {
+                    f_close(f, &fheader);
+                    printf("file closed - bye!\n");
+                }
+                break;
 
-    printf("Adjusting op has taken: ops\n");
-    f_close(f, &fheader);
+            case SHOW_OP:
+                if(f == NULL)
+                    printf("error: no file is opened yet!\n");
+                else
+                {
+                    printf("show from block: ");
+                    scanf("%d", &from);
+                    printf("to(type -1 for last block): ");
+                    scanf("%d", &to);
+                    if(to == -1)
+                        to = fheader.bck - 1;
+                    f_show(f, &buf1, 0, fheader.bck - 1);
+                }
+                break;
+
+            case DELETE_OP:
+                if(f == NULL)
+                    printf("error: no file is opened yet!\n");
+                else
+                {
+                    printf("type value to delete: ");
+                    scanf("%d", &tmp);
+                    tmp = f_del(f, &fheader, &buf1, tmp);
+                    if(tmp > 0)
+                        printf("value has been succesfully deleted!\n");
+                    tmp = (tmp>=0)?tmp:-tmp;
+                    printf("task has taken %d i/o ops\n", tmp);
+                }
+                break;
+
+            case UDELETE_OP:
+                if(f == NULL)
+                    printf("error: no file is opened yet!\n");
+                else
+                {
+                    printf("block(type -1 for last block): ");
+                    scanf("%d", &from);
+                    printf("to(type -1 for last el): ");
+                    scanf("%d", &to);
+                    if(to == -1)
+                        to = MAX_ARR - 1;
+                    if(from == -1)
+                        to = fheader.bck - 1;
+                    tmp = f_del_unordered(f, &fheader, &buf1, from, to);
+                    if(tmp > 0)
+                        printf("sucess: value at block %d offset %d is deleted, taken %d i/o ops!\n", from ,to, tmp);
+                    else
+                        printf("error: coords out of range!\n");
+
+                }
+                break;
+
+            case SEARCH_OP:
+                if(f == NULL)
+                    printf("error: no file is opened yet!\n");
+                else {
+                    printf("value to seek is: ");
+                    scanf("%d", &tmp);
+
+                    tmp1 = f_binary_search(f, &fheader, &buf1, tmp, &tmp, &from, &to);
+                    if (tmp > 0) // if found
+                        printf("value found in block %d at position %d\n", from, to);
+                    else
+                        printf("value not found\n");
+                    printf("task has taken %d i/o ops\n", tmp1);
+                }
+                break;
+            default:
+                printf("error: can't handle this operation (not found)\n");
+        }
+
+    }
 
     return 0;
 }

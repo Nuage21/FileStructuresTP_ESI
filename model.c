@@ -58,8 +58,7 @@ long blck_del(FILE *_file, fheader_t *_fheader, fblock_t *_buf, long _i)
             blck_read(_file, i, _buf);
             blck_write(_file, i - 1, _buf);
         }
-    _fheader->bck--;
-    _chsize(_fileno(_file), sizeof(fheader_t) + sizeof(fblock_t) * _fheader->bck);
+    f_truncate_blocks(_file, _fheader, 1);
     return 2 * (_fheader->bck - _i - 1);
 }
 
@@ -123,7 +122,7 @@ long f_del(FILE* _f, fheader_t *_fheader, fblock_t *_buf, int _val)
 
     if (!found || _buf->raz[j] == '*') {
         printf("error: can't delete value! not found!\n");
-        return cptR;
+        return -cptR;
     }
 
     _buf->raz[j] = '*';   // logical kick out

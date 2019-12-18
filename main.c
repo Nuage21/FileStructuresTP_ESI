@@ -5,9 +5,9 @@
 #include "model.h"
 
 /******************************************************************
- * Author: Hakim Beldjoudi
+ * Author: Hakim Beldjoudi @esi-2cp-g3
  * code can be found at https://github.com/hbFree/FileStructuresTP_ESI
- *
+ * help.txt must be at the same directory as the executable program
  */
 // functions
 void blck_adjust(fblock_t *buf);
@@ -49,7 +49,7 @@ void clear_screen()
 }
 
 void show_help() {
-    FILE *file = fopen("E:\\Workplace\\C-C++\\esi-tp\\help.txt", "r");
+    FILE *file = fopen("help.txt", "r");
     if (file == NULL) {
         printf("error: can't find help file!\n");
         return;

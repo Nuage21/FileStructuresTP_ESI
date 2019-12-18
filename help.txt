@@ -1,0 +1,14 @@
+Welcome Professor..
+
+>> To open or create a new a file                                   : open
+>> To close the current file                                        : close
+>> To load the current file with a specific rate)                   : load
+>> To adjust the current file (niveau-1-exo-1)                      : adjust
+>> To quit the program                                              : quit
+>> To logic-delete a value from the current file type               : del
+>> To phisically-delete a position from the current T~OF_file(exo-2): udel
+>> To range-display the content of the current file                 : show
+>> To BinarySearch (par dichotomie) a value fromthe current file    : search
+>> To show this help-menu                                           : help
+>> To clear the screen                                              : clear
+

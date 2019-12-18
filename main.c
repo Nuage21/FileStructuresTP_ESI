@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 #include "model.h"
 
 /******************************************************************
@@ -14,7 +15,7 @@ long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset);
 
-char* ops[] = {"open", "close", "load", "adjust", "quit", "del", "udel", "show", "search"};
+char* ops[] = {"open", "close", "load", "adjust", "quit", "del", "udel", "show", "search", "help", "clear"};
 
 #define OPENFILE_OP   0
 #define CLOSEFILE_OP  1
@@ -25,15 +26,41 @@ char* ops[] = {"open", "close", "load", "adjust", "quit", "del", "udel", "show",
 #define UDELETE_OP    6 // unordered file value deletion by last replacing
 #define SHOW_OP       7
 #define SEARCH_OP     8 // binary search a value (par dichotomie)
+#define HELP_OP       9 // show help file
+#define CLEAR_OP      10 // clear screen
 #define INVALID_OP   -1
 
 int get_opcode(const char *_task)
 {
-    for(int i = 0; i < 9; i++)
+    for(int i = 0; i < 11; i++)
         if(strcmp(_task, ops[i]) == 0)
             return i;
     return INVALID_OP;
 }
+
+void clear_screen()
+{
+    #ifdef __WIN32__ // compile for windows
+    system("cls");
+    #endif
+    #ifdef __linux__ // compile for linux
+    system("clear");
+    #endif
+}
+
+void show_help() {
+    FILE *file = fopen("E:\\Workplace\\C-C++\\esi-tp\\help.txt", "r");
+    if (file == NULL) {
+        printf("error: can't find help file!\n");
+        return;
+    }
+    char c = '\0';
+    while ((c = getc(file)) != EOF)
+        putchar(c);
+
+    fclose(file);
+}
+
 int main()
 {
     FILE* f = NULL;
@@ -44,6 +71,9 @@ int main()
     char filename[FILENAME_MAX];
     char answer = '\0';
     long from = 0, to = 0, tmp = 0, tmp1 = 0;
+
+    show_help();
+
     while(true)
     {
         memset(filename, 0, FILENAME_MAX);
@@ -54,6 +84,7 @@ int main()
         printf(">> ");
         scanf("%s", taskbuf);
         int opcode = get_opcode(taskbuf);
+        fflush(stdin);
 
         if(opcode == QUITAPP_OP)
         {
@@ -174,6 +205,13 @@ int main()
                         printf("value not found\n");
                     printf("task has taken %d i/o ops\n", tmp1);
                 }
+                break;
+            case CLEAR_OP:
+                clear_screen();
+                break;
+
+            case HELP_OP:
+                show_help();
                 break;
             default:
                 printf("error: can't handle this operation (not found)\n");

@@ -10,23 +10,39 @@
  * Author: Hakim Beldjoudi @esi-2cp-g3
  * code can be found at https://github.com/hbFree/FileStructuresTP_ESI
  * help.txt must be at the same directory as the executable program
+ * Vocabulary: TUVC -> file of type: TABLE(ARRAY)-UNORDERED-VARIABLE_DATA_LENGTH-OVERLAPPING(CHEVAUCHEMENT)
+ *
+ * fr/
+ * Pour ne pas trop repeter du code j'ai utilise la meme entete pour les deux types de fichiers et inclue
+ * la position de la premiere position libre dans le pad de l'entete!
+ * Le TP traite est le Niveau 1 dont exo-3, exo-6 & exo-13
+ * Bonne correction!
  */
+
+
 // functions
 void blck_adjust(fblock_t *buf);
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset);
 
+#define TOF_FILE  0
+#define TUVC_FILE 1
+
 int main()
 {
     FILE* f = NULL;
     fheader_t fheader;
     fblock_t buf1, buf2;
+    TUVCblock_t tbuf1, tbuf2; // T~OVC buffers
 
     char taskbuf[20];
     char filename[FILENAME_MAX];
     char answer = '\0';
     long from = 0, to = 0, tmp = 0, tmp1 = 0;
+    f_coord cd = INVALID_FCOORD();
+
+    int file_type = TOF_FILE; // current file type
 
     show_help();
 
@@ -63,6 +79,13 @@ int main()
                     scanf("%s", &answer);
                     printf("filename = ");
                     scanf("%s", filename);
+                    printf("file type (0 for TOF/ 1 for T~OVC) = ");
+                    scanf("%d", &file_type);
+                    if(file_type != 0 && file_type != 1)
+                    {
+                        printf("file type taken as TOF!\n");
+                        file_type = 0; // some correction
+                    }
                     f_open(&f, filename, &fheader, answer);
                     printf("success: file %s is open!\n", filename);
                 }
@@ -82,7 +105,16 @@ int main()
                 if(f == NULL)
                     printf("error: no file to load elements to - nothing opened!\n");
                 else
-                    f_load(f, &fheader, &buf1);
+                {
+                    if(file_type == TOF_FILE)
+                        f_load(f, &fheader, &buf1);
+                    else
+                    {
+                        printf("total elements to insert in the file= ");
+                        scanf("%d", &tmp);
+                        TUVCf_load(f, &fheader, &tbuf1, tmp);
+                    }
+                }
                 break;
 
             case ADJUSTFILE_OP:
@@ -106,7 +138,10 @@ int main()
                     scanf("%d", &to);
                     if(to == -1)
                         to = fheader.bck - 1;
-                    f_show(f, &buf1, 0, fheader.bck - 1);
+                    if(file_type == TOF_FILE)
+                        f_show(f, &buf1, from, to);
+                    else
+                        TUVCf_show(f, &tbuf1, from, to);
                 }
                 break;
 
@@ -116,12 +151,24 @@ int main()
                 else
                 {
                     printf("type value to delete: ");
-                    scanf("%d", &tmp);
-                    tmp = f_del(f, &fheader, &buf1, tmp);
-                    if(tmp > 0)
-                        printf("value has been succesfully deleted!\n");
-                    tmp = (tmp>=0)?tmp:-tmp;
-                    printf("task has taken %d i/o ops\n", tmp);
+                    if(file_type == TOF_FILE)
+                    {
+                        scanf("%d", &tmp);
+                        tmp = f_del(f, &fheader, &buf1, tmp);
+                        if(tmp > 0)
+                            printf("value has been succesfully deleted!\n");
+                        tmp = (tmp>=0)?tmp:-tmp;
+                        printf("task has taken %d i/o ops\n", tmp);
+                    }
+                    else
+                    {
+                        scanf("%s", filename);
+                        tmp = TUVCf_del(f, &fheader, &tbuf1, filename);
+                        if(tmp == 0)
+                            printf("value has been succesfully deleted!\n");
+                        else
+                            printf("error: value not found!\n");
+                    }
                 }
                 break;
 
@@ -130,6 +177,12 @@ int main()
                     printf("error: no file is opened yet!\n");
                 else
                 {
+                    if(file_type == TUVC_FILE)
+                    {
+                        printf("can't run this op! for T~OVC files, deletion is logically performed\n");
+                        break;
+                    }
+
                     printf("block(type -1 for last block): ");
                     scanf("%d", &from);
                     printf("position (type -1 for last el): ");
@@ -140,7 +193,7 @@ int main()
                         to = fheader.bck - 1;
                     tmp = f_del_unordered(f, &fheader, &buf1, from, to);
                     if(tmp > 0)
-                        printf("sucess: value at block %d offset %d is deleted, taken %d i/o ops!\n", from ,to, tmp);
+                        printf("success: value at block %d offset %d is deleted, taken %d i/o ops!\n", from ,to, tmp);
                     else
                         printf("error: coords out of range!\n");
 
@@ -151,15 +204,29 @@ int main()
                 if(f == NULL)
                     printf("error: no file is opened yet!\n");
                 else {
-                    printf("value to seek is: ");
-                    scanf("%d", &tmp);
+                    if(file_type == TOF_FILE)
+                    {
+                        printf("value to seek is: ");
+                        scanf("%d", &tmp);
 
-                    tmp1 = f_binary_search(f, &fheader, &buf1, tmp, &tmp, &from, &to);
-                    if (tmp > 0) // if found
-                        printf("value found in block %d at position %d\n", from, to);
-                    else
-                        printf("value not found\n");
-                    printf("task has taken %d i/o ops\n", tmp1);
+                        tmp1 = f_binary_search(f, &fheader, &buf1, tmp, &tmp, &from, &to);
+                        if (tmp > 0) // if found
+                            printf("value found in block %d at position %d\n", from, to);
+                        else
+                            printf("value not found\n");
+                        printf("task has taken %d i/o ops\n", tmp1);
+                    }
+                    else // T~OVC
+                    {
+                        printf("value to seek is: ");
+                        scanf("%s", filename);
+                        cd = TUVCf_search(f, &fheader, &tbuf1, filename);
+                        if(cd.offset < 0 || cd.bck < 0)
+                            printf("value not found\n");
+                        else
+                            printf("value found in block %d at position %d\n", cd.bck, cd.offset);
+
+                    }
                 }
                 break;
             case CLEAR_OP:

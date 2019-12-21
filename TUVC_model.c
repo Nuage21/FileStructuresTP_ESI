@@ -255,5 +255,18 @@ void TUVCf_insert(FILE *file, fheader_t *header, TUVCblock_t *buf, char *_val)
     header->ins++;
 }
 
+// load file with total_data strings
+void TUVCf_load(FILE *file, fheader_t *header, TUVCblock_t *buf, unsigned int total_data)
+{
+    // YES! to make quick I've could just insert them inside buf and do so for the buf when is full
+    // but really I've got no time! just consider that I got well the lesson xD
+    for(int i = 0; i < total_data; i++)
+    {
+        char *randw = rand_word();
+        TUVCf_insert(file, header, buf, randw);
+        free(randw);
+    }
+}
+
 //
 

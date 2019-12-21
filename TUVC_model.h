@@ -20,14 +20,6 @@ typedef struct  TUVC_file_block
 
 } TUVCblock_t;
 
-typedef struct  TUVC_block_element
-{
-    char razed;
-    int size;
-    char *data;
-
-} TUVCelt_t;
-
 typedef struct __overlap__{
     char *data;
     size_t len;
@@ -63,5 +55,8 @@ void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max);
 
 // truncate _n blocks from _file (change its size & its bck-num prop)
 void f_truncate_blocks(FILE *_file, fheader_t *_fheader, long _n);
+
+// load file with total_data strings
+void TUVCf_load(FILE *file, fheader_t *header, TUVCblock_t *buf, unsigned int total_data);
 
 #endif

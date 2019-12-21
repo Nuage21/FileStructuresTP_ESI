@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "model.h"
+#include "TUVC_model.h"
+#include "util.h"
 
 /******************************************************************
  * Author: Hakim Beldjoudi @esi-2cp-g3
@@ -14,52 +16,6 @@ void blck_adjust(fblock_t *buf);
 long f_adjust(FILE *_f, fheader_t *_fheader, fblock_t *_buf1, fblock_t *_buf2);
 void f_load(FILE *_f, fheader_t *_fheader, fblock_t *buf);
 long f_del_unordered(FILE *_f, fheader_t *_fheader, fblock_t *buf, long _blck, int offset);
-
-char* ops[] = {"open", "close", "load", "adjust", "quit", "del", "udel", "show", "search", "help", "clear"};
-
-#define OPENFILE_OP   0
-#define CLOSEFILE_OP  1
-#define LOADFILE_OP   2
-#define ADJUSTFILE_OP 3
-#define QUITAPP_OP    4
-#define DELETE_OP     5
-#define UDELETE_OP    6 // unordered file value deletion by last replacing
-#define SHOW_OP       7
-#define SEARCH_OP     8 // binary search a value (par dichotomie)
-#define HELP_OP       9 // show help file
-#define CLEAR_OP      10 // clear screen
-#define INVALID_OP   -1
-
-int get_opcode(const char *_task)
-{
-    for(int i = 0; i < 11; i++)
-        if(strcmp(_task, ops[i]) == 0)
-            return i;
-    return INVALID_OP;
-}
-
-void clear_screen()
-{
-    #ifdef __WIN32__ // compile for windows
-    system("cls");
-    #endif
-    #ifdef __linux__ // compile for linux
-    system("clear");
-    #endif
-}
-
-void show_help() {
-    FILE *file = fopen("help.txt", "r");
-    if (file == NULL) {
-        printf("error: can't find help file!\n");
-        return;
-    }
-    char c = '\0';
-    while ((c = getc(file)) != EOF)
-        putchar(c);
-
-    fclose(file);
-}
 
 int main()
 {

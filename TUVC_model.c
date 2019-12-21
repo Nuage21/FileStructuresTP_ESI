@@ -433,5 +433,22 @@ f_coord TUVCf_search(FILE *file, fheader_t *header, TUVCblock_t  *buf, char *val
     return cd;
 }
 
+// delete a value
+// return 0 for success, -1 if not found
+int TUVCf_del(FILE *file, fheader_t *header, TUVCblock_t *buf, char *val)
+{
+    f_coord cd = TUVCf_search(file, header, buf, val);
+
+    if(cd.offset < 0 || cd.bck < 0)
+        return 1;
+
+    TUVC_blck_read(file, cd.bck, buf);
+    *(buf->arr + cd.offset) = '*'; // logic deletion
+    TUVC_blck_write(file, cd.bck, buf);
+    header->sup++;
+
+    return 0; // success
+}
+
 //
 

@@ -26,8 +26,8 @@ typedef struct __overlap__{
 } __overlap__;
 
 typedef struct infile_value_coord{
-    unsigned long bck;
-    unsigned long offset;
+    long bck;
+    long offset;
 } f_coord;
 
 
@@ -69,5 +69,9 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i);
 
 // display blocks @[min, max]
 void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max);
+
+// delete a value
+// return 0 for success, -1 if not found
+int TUVCf_del(FILE *file, fheader_t *header, TUVCblock_t *buf, char *val);
 
 #endif

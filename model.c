@@ -16,9 +16,7 @@ void f_open(FILE** _f_holder, char *_filename, fheader_t *_h_holder, char _mode)
     else { // mode == 'N' || mode == 'n'
         *_f_holder = fopen(_filename, "wb+" );
         if ( *_f_holder == NULL ) perror("file not found! (@open_file)");
-        _h_holder->bck = 0;
-        _h_holder->ins = 0;
-        _h_holder->sup = 0;
+        memset(_h_holder, 0, sizeof(fheader_t)); // reset header
         fwrite(_h_holder, sizeof(fheader_t), 1, *_f_holder);
     }
 }
@@ -147,6 +145,7 @@ void blck_show(fblock_t *_buf)
             printf("~ "); // unset
     printf("\n________________________________________________\n");
 }
+
 // display blocks @[min, max]
 void f_show(FILE* _f, fblock_t *_buf, int min, int max)
 {

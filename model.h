@@ -41,7 +41,7 @@ void blck_write(FILE *_file, long _i, fblock_t *_buf );
 // delete i'th block from _file
 long blck_del(FILE *_file, fheader_t *_header, fblock_t *_buf, long _i);
 
-// BinarySearch
+// BinarySearch (par dichotomie)
 // return back total of block inputs
 // if exist: then it's &i'th block with a j'th offset
 long f_binary_search( FILE* _f, fheader_t *_fheader, fblock_t *_buf, long val, int *found, long *i, int *j);

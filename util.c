@@ -38,3 +38,24 @@ void show_help() {
 
     fclose(file);
 }
+
+// return a random a-z word
+char* rand_word()
+{
+    static int s_randed = 0; // gotta call srand one time only
+    if(s_randed == 0)
+    {
+        srand(time(0));
+        s_randed = 0xff;
+    }
+
+    int word_len = (rand() % (RANDOM_WORD_MAX - RANDOM_WORD_MIN)) + RANDOM_WORD_MIN;
+    char *word = (char*) malloc(word_len + 1);
+    *(word + word_len) = '\0';
+    for(int i = 0; i < word_len; i++)
+    {
+        char c = (char) ((rand() % 26) + 'a');
+        *(word + i) = c;
+    }
+    return word;
+}

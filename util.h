@@ -23,6 +23,11 @@
 #define HELP_OP       9 // show help file
 #define CLEAR_OP      10 // clear screen
 
+// word rand
+#define RANDOM_WORD_MAX 15
+#define RANDOM_WORD_MIN 3
+
+
 // get operation code of string command
 int get_opcode(const char *_task);
 
@@ -32,5 +37,7 @@ void clear_screen();
 // show help file content
 void show_help();
 
+// return a random a-z word
+char* rand_word();
 
 #endif //ESI_TP_UTIL_H

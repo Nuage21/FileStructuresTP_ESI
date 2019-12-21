@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "model.h"
+#include "util.h"
 
 #define TUVC_MAX 512
-#define INVALID_OVERLAP {.data = NULL, .len = 0};
 
 typedef unsigned char byte_t;
 
@@ -25,11 +25,28 @@ typedef struct __overlap__{
     size_t len;
 } __overlap__;
 
+typedef struct infile_value_coord{
+    unsigned long bck;
+    unsigned long offset;
+} f_coord;
+
+
+// return an INVALID overlap
+__overlap__ INVALID_OVERLAP();
+
+// return an INVALID fcoord
+f_coord INVALID_FCOORD();
 
 // _i starts at 0 {ARRAY INDEXES BEGIN AT 0 - PLEASE DON'T GET US CONFUSED IN OUR NEXT JOB FIELD - SAHITSOU!}
 void TUVC_blck_read( FILE *_f_holder, long _i, TUVCblock_t *_buf );
 
 void TUVC_blck_write(FILE *_f_holder, long _i, TUVCblock_t *_buf);
+
+// O(n) seek of val
+f_coord TUVCf_search(FILE *file, fheader_t *header, TUVCblock_t  *buf, char *val);
+
+// load file with total_data strings
+void TUVCf_load(FILE *file, fheader_t *header, TUVCblock_t *buf, unsigned int total_data);
 
 // to use the same header structure for both file types, this fnct get the first
 // free position of the last block that would normally be stored inside the strct.pad
@@ -52,11 +69,5 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i);
 
 // display blocks @[min, max]
 void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max);
-
-// truncate _n blocks from _file (change its size & its bck-num prop)
-void f_truncate_blocks(FILE *_file, fheader_t *_fheader, long _n);
-
-// load file with total_data strings
-void TUVCf_load(FILE *file, fheader_t *header, TUVCblock_t *buf, unsigned int total_data);
 
 #endif

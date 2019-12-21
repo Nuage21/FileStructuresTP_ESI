@@ -7,7 +7,21 @@
 #include <stdbool.h>
 #include <string.h>
 #include <io.h>
+#include "util.h"
 
+
+__overlap__ INVALID_O = { .data = NULL, .len = 0};
+__overlap__ INVALID_OVERLAP()
+{
+    return INVALID_O;
+}
+
+f_coord INVALID_FC  = {.bck = -1, .offset = -1};
+
+f_coord INVALID_FCOORD()
+{
+    return INVALID_FC;
+}
 
 // to use the same header structure for both file types, this fnct get the first
 // free position of the last block that would normally be stored inside the strct.pad
@@ -45,7 +59,7 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
     printf("\n________________________________________________\n");
     char raz = 0xff;
     unsigned int len = 0;
-    __overlap__ overlapped_data = INVALID_OVERLAP;
+    __overlap__ overlapped_data = INVALID_OVERLAP();
 
     while(i < TUVC_MAX)
     {
@@ -93,12 +107,12 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
         memmove(data, _buf->arr + i, len); // read data
 
         if(raz == '*')
-            printf('%c', raz);
+            printf("%c", raz);
 
         printf(data); // display data
 
         if(raz == '*')
-            printf('%c', raz);
+            printf("%c", raz);
 
         printf(" "); // some space
 
@@ -111,7 +125,7 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
 
 void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max)
 {
-    __overlap__ ov_data = INVALID_OVERLAP;
+    __overlap__ ov_data = INVALID_OVERLAP();
     while(min <= max)
     {
         int st = 0;
@@ -266,6 +280,157 @@ void TUVCf_load(FILE *file, fheader_t *header, TUVCblock_t *buf, unsigned int to
         TUVCf_insert(file, header, buf, randw);
         free(randw);
     }
+}
+
+// O(n) seek of val
+f_coord TUVCf_search(FILE *file, fheader_t *header, TUVCblock_t  *buf, char *val)
+{
+    int vlen = strlen(val);
+    int i = 0;
+    char raz = 0xff;
+    int dlen = 0;
+
+    __overlap__ ov_data = INVALID_OVERLAP();
+
+    while(i < header->bck)
+    {
+        TUVC_blck_read(file, i, buf); // read current block
+        int j = 0;
+        while(j < TUVC_MAX)
+        {
+            if(ov_data.len > 0)
+            {
+                char raz = *ov_data.data; // erase index
+                unsigned int data_size = -1;
+                char *data = NULL;
+                // get data_size
+                if(ov_data.len > 1)
+                {
+                    // if data-size is overlapped over two buffers
+                    if(ov_data.len - 1 < sizeof(int))
+                    {
+                        char sz[4] = {'\0', '\0', '\0', '\0'}; // size holder
+                        memmove(sz, ov_data.data + 1, ov_data.len - 1); // first part
+                        j = sizeof(int) - ov_data.len + 1;
+                        memmove(sz + ov_data.len - 1 , buf->arr, j); //2nd part in the buffer
+                        memmove(&data_size, sz, sizeof(int)); //2nd part in the buffer
+                        data = (char *) malloc(data_size + 1);
+                        *(data+data_size) = '\0'; // taken as a string
+                        memmove(data, buf->arr + j, data_size); //2nd part in the buffer
+                        j += data_size;
+                    }
+                    else // data-size is contained not overlapped!
+                    {
+                        memmove(&data_size, ov_data.data + 1, sizeof(int));
+
+                        data = (char *) malloc(data_size + 1);
+                        *(data+data_size) = '\0'; // taken as a string
+                        int data_still = ov_data.len - 1 - sizeof(int);
+
+                        if(data_still > 0) // still some data in the last buffer
+                        {
+                            memmove(data, ov_data.data + 1 + sizeof(int), data_still); // init with the part from previous buf
+                            data_size -= data_still;
+                        }
+                        memmove(data + data_still, buf->arr, data_size); //2nd part in the buffer
+                        j = data_size;
+
+                    }
+
+                }
+                else if(ov_data.len == 1)
+                {
+                    memmove(&data_size, buf->arr, sizeof(int));
+                    data = (char *) malloc(data_size + 1);
+                    *(data+data_size) = '\0'; // taken as a string
+                    memmove(data, buf->arr + sizeof(int), data_size); //2nd part in the buffer
+                    j = sizeof(int) + data_size;
+                }
+
+                f_coord cd = INVALID_FCOORD();
+
+                int found = 0; // found by default
+                for(int p = 0; p < dlen; ++p)
+                    if(*(data+p) != *(val + p))
+                    {
+                        found = 1; // different here
+                        break;
+                    }
+
+                free(data);
+
+                if(found == 0)
+                {
+                    cd.bck = i - 1; // previous block
+                    cd.offset = TUVC_MAX - ov_data.len;
+
+                    return cd;
+                }
+                ov_data = INVALID_OVERLAP(); // reset
+            }
+
+            raz = *(buf->arr + j);
+            j++; // erase index read
+
+            if(j + sizeof(int) > TUVC_MAX)
+            {
+                size_t leftlen = TUVC_MAX - j;
+                char *store = (char*) malloc(leftlen + 1);
+
+                *store = raz; // move erase index
+                memmove(store+1, buf->arr + j, leftlen); // move length
+
+                ov_data.data = store;
+                ov_data.len = leftlen + 1;
+
+                break;
+            }
+
+            memmove(&dlen, buf->arr + j, sizeof(int));
+            j += sizeof(int);
+
+            if(j + dlen > TUVC_MAX) // write left overlapped data into ov_data
+            {
+                size_t leftlen = TUVC_MAX - j;
+                char *store = (char*) malloc(leftlen + 1 + sizeof(int));
+                *store = raz; // move erase index
+                memmove(store+1, &dlen, sizeof(int)); // move length
+                memmove(store+1 + sizeof(int), buf->arr + j, leftlen);
+                ov_data.data = store;
+                ov_data.len = 1 + sizeof(int) + leftlen;
+
+                break;
+            }
+
+            // if not same size or current ois erased (logically) then just skip
+            if(raz != ' ' || dlen != vlen)
+            {
+                j += dlen; // skip data length
+                continue;
+            }
+
+            int k = 0;
+            int found = 0; // found by default
+            // compare byte-byte
+            while(k < dlen)
+            {
+                if(*(buf->arr + j + k) != *(val + k))
+                {
+                    j += dlen;
+                    found = 1;
+                    break;
+                }
+                k++;
+            }
+            if(found != 0)
+                continue;
+            f_coord cd = {.bck = i, .offset = j - 1 - sizeof(int)};
+            return cd;
+        }
+        i++;
+    }
+    f_coord cd = INVALID_FCOORD();
+    return cd;
 }
 
 //

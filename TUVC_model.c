@@ -44,8 +44,7 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
     printf("|block|");
     printf("\n________________________________________________\n");
     char raz = 0xff;
-    bool any_divided = false;
-    unsigned int len = 0xff;
+    unsigned int len = 0;
     __overlap__ overlapped_data = INVALID_OVERLAP;
 
     while(i < TUVC_MAX)
@@ -54,13 +53,13 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
         i++; // next pos
 
         // enough left space ?
-        if(i + sizeof(int) >= TUVC_MAX)
+        if(i + sizeof(int) > TUVC_MAX)
         {
             size_t leftlen = TUVC_MAX - i;
             char *store = (char*) malloc(leftlen + 1);
 
             *store = raz; // move erase index
-            memmove(store+1, &len, leftlen); // move length
+            memmove(store+1, _buf->arr + i, leftlen); // move length
 
             overlapped_data.data = store;
             overlapped_data.len = leftlen + 1;
@@ -68,7 +67,7 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
             return overlapped_data;
         }
 
-        memmove(&len, _buf->arr + i, sizeof(unsigned int)); // read length
+        memmove(&len, _buf->arr + i, sizeof(int)); // read length
 
         if(len == 0) // no empty data please!
             break;
@@ -79,7 +78,6 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
         {
             size_t leftlen = TUVC_MAX - i;
             char *store = (char*) malloc(leftlen + 1 + sizeof(int));
-
             *store = raz; // move erase index
             memmove(store+1, &len, sizeof(int)); // move length
             memmove(store+1 + sizeof(int), _buf->arr + i, leftlen);
@@ -95,12 +93,12 @@ __overlap__ TUVCblck_show(TUVCblock_t *_buf, int i)
         memmove(data, _buf->arr + i, len); // read data
 
         if(raz == '*')
-            printf("%c", raz);
+            printf('%c', raz);
 
         printf(data); // display data
 
         if(raz == '*')
-            printf("%c", raz);
+            printf('%c', raz);
 
         printf(" "); // some space
 
@@ -129,7 +127,7 @@ void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max)
                 // if data-size is overlapped over two buffers
                 if(ov_data.len - 1 < sizeof(int))
                 {
-                    char sz[5] = {'\0', '\0', '\0', '\0'}; // size holder
+                    char sz[4] = {'\0', '\0', '\0', '\0'}; // size holder
                     memmove(sz, ov_data.data + 1, ov_data.len - 1); // first part
                     st = sizeof(int) - ov_data.len + 1;
                     memmove(sz + ov_data.len - 1 , buf->arr, st); //2nd part in the buffer
@@ -142,33 +140,38 @@ void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max)
                 else // data-size is contained not overlapped!
                 {
                     memmove(&data_size, ov_data.data + 1, sizeof(int));
+
                     data = (char *) malloc(data_size + 1);
                     *(data+data_size) = '\0'; // taken as a string
                     int data_still = ov_data.len - 1 - sizeof(int);
 
-                    if(data_still > 0) // still some data in the buffer
+                    if(data_still > 0) // still some data in the last buffer
                     {
-                        memmove(data, ov_data.data + 1 + sizeof(int), data_still); //2nd part in the buffer
+                        memmove(data, ov_data.data + 1 + sizeof(int), data_still); // init with the part from previous buf
                         data_size -= data_still;
                     }
                     memmove(data + data_still, buf->arr, data_size); //2nd part in the buffer
                     st = data_size;
+
                 }
 
             }
             else if(ov_data.len == 1)
             {
-                memmove(&data_size, buf, sizeof(int));
+                memmove(&data_size, buf->arr, sizeof(int));
                 data = (char *) malloc(data_size + 1);
                 *(data+data_size) = '\0'; // taken as a string
-                memmove(data, buf + sizeof(int), data_size); //2nd part in the buffer
+                memmove(data, buf->arr + sizeof(int), data_size); //2nd part in the buffer
                 st = sizeof(int) + data_size;
             }
-            printf("\n________________________________________________\n");
-            printf("Overlapped data: ~%c%s%c~ \n", raz, data, raz);
+            printf("\n|Overlapped data: ~%c%s%c~|\n\n", raz, data, raz);
             free(data);
         }
         printf("%d'th ", min);
+
+        if(ov_data.len > 0)
+            free(ov_data.data);
+
         ov_data = TUVCblck_show(buf, st);
         min++;
     }
@@ -251,7 +254,6 @@ void TUVCf_insert(FILE *file, fheader_t *header, TUVCblock_t *buf, char *_val)
 
     header->ins++;
 }
-
 
 //
 

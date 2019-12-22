@@ -74,4 +74,9 @@ void TUVCf_show(FILE *file, TUVCblock_t *buf, int min, int max);
 // return 0 for success, -1 if not found
 int TUVCf_del(FILE *file, fheader_t *header, TUVCblock_t *buf, char *val);
 
+
+// gain space by skipping erased data
+// NOT COMPLETE SORRY - GOT NO TIME
+void TUVCf_adjust(FILE *file, fheader_t *header, TUVCblock_t *buf, TUVCblock_t *buf2);
+
 #endif

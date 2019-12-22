@@ -122,8 +122,14 @@ int main()
                     printf("error: no file to adjust - nothing opened!\n");
                 else
                 {
-                    tmp = f_adjust(f, &fheader, &buf1, &buf2);
-                    printf("task has taken %d i/o ops\n", tmp);
+                    if(file_type == TOF_FILE)
+                    {
+                        tmp = f_adjust(f, &fheader, &buf1, &buf2);
+                        printf("task has taken %d i/o ops\n", tmp);
+                    }
+                    else
+                        printf("Sorry! Hakim had gotten a headache & no time to complete this task :( \n");
+
                 }
                 break;
 

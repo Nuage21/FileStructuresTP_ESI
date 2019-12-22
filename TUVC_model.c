@@ -455,5 +455,59 @@ int TUVCf_del(FILE *file, fheader_t *header, TUVCblock_t *buf, char *val)
     return 0; // success
 }
 
+// gain space by skipping erased data
+// NOT COMPLETE SORRY - GOT NO TIME
+void TUVCf_adjust(FILE *file, fheader_t *header, TUVCblock_t *buf, TUVCblock_t *buf2)
+{
+    int i = 0, p = 0;
+    int total_blocks = 0;
+    while(header->sup > 0)
+    {
+        TUVC_blck_read(file, i, buf);
+        for(int j = 0; j < TUVC_MAX;)
+        {
+            char raz = *(buf->arr + j);
+            j++;
+            if(j >= TUVC_MAX);
+            int len = 0;
+            memmove(&len, buf->arr + j, sizeof(int));
+            j += sizeof(int);
+
+            if(raz != ' ' && raz != '*')
+                break;
+
+            if(raz != ' ')
+            {
+                j += len;
+                header->sup--;
+                printf("sup = %d\n", header->sup);
+                continue;
+            }
+            else{
+                memmove(buf2->arr + p, buf->arr + j - 1 - sizeof(int), 1);
+                memmove(buf2->arr + p + 1, buf->arr - sizeof(int), sizeof(int));
+                memmove(buf2->arr + p + 1 + sizeof(int), buf->arr + j, len);
+                j += len;
+                p += 1 + sizeof(int) + len;
+            }
+            if(p >= TUVC_MAX)
+            {
+                total_blocks++;
+                TUVC_blck_write(file, total_blocks - 1, buf2);
+                p = 0;
+                memset(buf2, 0, sizeof(TUVCblock_t));
+            }
+        }
+        i++;
+    }
+    if(total_blocks == 0 && header->ins > 0)
+    {
+        printf("WRITTEN");
+        total_blocks = 1;
+        TUVC_blck_write(file, total_blocks - 1, buf2);
+    }
+    header->bck = total_blocks;
+}
+
 //
 

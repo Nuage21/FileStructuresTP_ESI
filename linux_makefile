@@ -1,0 +1,10 @@
+CC=gcc
+CFLAGS=-I.
+DEPS = util.h model.h TUVC_model.h
+OBJ = main.o util.o model.o TUVC_model.o
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+tp_run: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)

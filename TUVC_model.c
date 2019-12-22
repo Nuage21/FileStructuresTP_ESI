@@ -350,12 +350,17 @@ f_coord TUVCf_search(FILE *file, fheader_t *header, TUVCblock_t  *buf, char *val
                 f_coord cd = INVALID_FCOORD();
 
                 int found = 0; // found by default
-                for(int p = 0; p < dlen; ++p)
-                    if(*(data+p) != *(val + p))
-                    {
-                        found = 1; // different here
-                        break;
-                    }
+                if(raz == ' ')
+                {
+                    for(int p = 0; p < dlen; ++p)
+                        if(*(data+p) != *(val + p))
+                        {
+                            found = 1; // different here
+                            break;
+                        }
+                }
+                else
+                    found = 1;
 
                 free(data);
 
